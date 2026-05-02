@@ -19,6 +19,38 @@ nvidia_client = openai.OpenAI(
 MODEL = "openai/gpt-oss-20b"
 _executor = ThreadPoolExecutor(max_workers=10)
 
+def seed_data():
+    """Load sample data from dataset/ to populate the UI on fresh deployment."""
+    try:
+        # Load Categories
+        cat_dir = "dataset/categories"
+        if os.path.exists(cat_dir):
+            for f in os.listdir(cat_dir):
+                if f.endswith(".json"):
+                    with open(os.path.join(cat_dir, f), 'r') as j:
+                        data = json.load(j)
+                        slug = f.replace(".json", "")
+                        context_store[f"category:{slug}"] = {"payload": data, "version": 1}
+        
+        # Load Merchants
+        with open("dataset/merchants_seed.json", 'r') as j:
+            merchants = json.load(j)
+            for m in merchants:
+                context_store[f"merchant:{m['id']}"] = {"payload": m, "version": 1}
+        
+        # Load Triggers
+        with open("dataset/triggers_seed.json", 'r') as j:
+            triggers = json.load(j)
+            for t in triggers:
+                context_store[f"trigger:{t['id']}"] = {"payload": t, "version": 1}
+                
+        print(f"[SEED] Successfully loaded {len(context_store)} context items.")
+    except Exception as e:
+        print(f"[SEED] Error loading seed data: {e}")
+
+# Run seed on startup
+seed_data()
+
 # ── Category voice — drives Category Fit score ────────────────────────────────
 CATEGORY_VOICE = {
     "dentists": {

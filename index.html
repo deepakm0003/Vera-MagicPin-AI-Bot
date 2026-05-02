@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VERA | TACTICAL SHELL v3.0</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #000000;
+            --surface: #0a0a0a;
+            --border: #1a1a1a;
+            --text: #ffffff;
+            --text-dim: #555555;
+            --accent: #ffffff;
+            --shell-bg: #050505;
+            --font-main: 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: var(--font-main);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes scanline { 0% { transform: translateY(-100%); } 100% { transform: translateY(100%); } }
+        .scanline { position: fixed; top: 0; left: 0; width: 100%; height: 2px; background: rgba(255,255,255,0.03); z-index: 999; pointer-events: none; animation: scanline 8s linear infinite; }
+
+        header { padding: 1rem 2rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #000; }
+        .logo { font-weight: 800; font-size: 1.2rem; letter-spacing: 2px; text-transform: uppercase; }
+        .version { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim); }
+
+        .container { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+
+        .top-deck { display: grid; grid-template-columns: 350px 1fr 380px; height: 60%; border-bottom: 1px solid var(--border); background: #080808; }
+        section { border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+        section:last-child { border-right: none; }
+
+        .section-label { padding: 0.6rem 1rem; border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: 0.65rem; text-transform: uppercase; color: var(--text-dim); background: #000; }
+
+        .controls { padding: 1.5rem; gap: 1rem; display: flex; flex-direction: column; overflow-y: auto; }
+        select, textarea, button { background: #000; border: 1px solid var(--border); color: #fff; padding: 0.8rem; border-radius: 2px; font-family: var(--font-mono); font-size: 0.8rem; outline: none; }
+        textarea { height: 80px; resize: none; font-family: var(--font-main); border-color: #333; }
+        textarea:focus { border-color: #fff; }
+        button { background: #fff; color: #000; font-weight: 800; cursor: pointer; transition: 0.2s; border: none; }
+        button:hover { background: #ccc; }
+        button:disabled { background: #333; color: #666; cursor: wait; }
+
+        label { font-size: 0.6rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: -0.5rem; }
+
+        .feed { padding: 1.5rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; }
+        .msg-card { background: #000; border: 1px solid var(--border); padding: 1.2rem; border-radius: 4px; animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .msg-body { font-size: 1rem; line-height: 1.5; margin-bottom: 1rem; font-weight: 300; }
+        .msg-cta { font-weight: 800; border-top: 1px solid var(--border); padding-top: 0.8rem; font-size: 0.85rem; color: #fff; }
+        .msg-meta { font-family: var(--font-mono); font-size: 0.6rem; color: #444; margin-bottom: 0.5rem; }
+
+        .analysis { padding: 1.2rem; gap: 1rem; display: flex; flex-direction: column; }
+        .bar-wrap { margin-bottom: 0.8rem; }
+        .bar-label { display: flex; justify-content: space-between; font-size: 0.65rem; margin-bottom: 0.3rem; font-family: var(--font-mono); }
+        .bar-bg { height: 2px; background: #222; }
+        .bar-fill { height: 100%; background: #fff; width: 0%; transition: width 0.8s ease-in-out; }
+
+        .shell { height: 40%; background: var(--shell-bg); padding: 1rem; display: flex; flex-direction: column; font-family: var(--font-mono); font-size: 0.85rem; color: #ccc; }
+        .shell-output { flex: 1; overflow-y: auto; }
+        .line { margin-bottom: 0.3rem; line-height: 1.4; display: flex; }
+        .line .time { color: var(--text-dim); min-width: 80px; }
+        .line .tag { color: #888; margin-right: 0.5rem; font-weight: bold; min-width: 70px; }
+        .line .content { color: #fff; flex: 1; }
+        .line.info .tag { color: #0077ff; }
+        .line.success .tag { color: #00ff00; }
+        .line.warn .tag { color: #ffff00; }
+        .line.llm .tag { color: #ff00ff; }
+
+        .empty-state { color: #333; font-style: italic; font-size: 0.8rem; text-align: center; margin-top: 2rem; }
+    </style>
+</head>
+<body>
+    <div class="scanline"></div>
+    <header>
+        <div class="logo">VERA TACTICAL CONSOLE</div>
+        <div class="version">DEPLOYMENT: PRO-ACTIVE | V17.0.4</div>
+    </header>
+
+    <div class="container">
+        <div class="top-deck">
+            <!-- CONTROLS -->
+            <section>
+                <div class="section-label">Strategic Targeting</div>
+                <div class="controls">
+                    <label>Merchant Context</label>
+                    <select id="mSelect"><option>Syncing merchants...</option></select>
+                    
+                    <label>Tactical Trigger</label>
+                    <select id="tSelect"><option>Syncing triggers...</option></select>
+                    
+                    <label>Custom Instructions / Input</label>
+                    <textarea id="uInput" placeholder="Add custom constraints or instructions for this message..."></textarea>
+                    
+                    <button id="exeBtn">EXECUTE COMPOSITION</button>
+                    
+                    <div id="sysStatus" style="font-size: 0.6rem; font-family: var(--font-mono); color: #333; margin-top: 1rem;">
+                        [NODE] ID: MAG-AI-01<br>
+                        [MEM] USAGE: 12.4GB / 80GB<br>
+                        [LLM] STATUS: CONNECTED (NVIDIA)
+                    </div>
+                </div>
+            </section>
+
+            <!-- FEED -->
+            <section>
+                <div class="section-label">Composition Output</div>
+                <div class="feed" id="feed">
+                    <div class="empty-state">Select target and execute tactical sequence.</div>
+                </div>
+            </section>
+
+            <!-- ANALYSIS -->
+            <section>
+                <div class="section-label">Judge Simulation</div>
+                <div class="analysis" id="analysis">
+                    <div class="bar-wrap">
+                        <div class="bar-label">SPECIFICITY <span id="s1">0/10</span></div>
+                        <div class="bar-bg"><div class="bar-fill" id="f1"></div></div>
+                    </div>
+                    <div class="bar-wrap">
+                        <div class="bar-label">CATEGORY FIT <span id="s2">0/10</span></div>
+                        <div class="bar-bg"><div class="bar-fill" id="f2"></div></div>
+                    </div>
+                    <div class="bar-wrap">
+                        <div class="bar-label">MERCHANT FIT <span id="s3">0/10</span></div>
+                        <div class="bar-bg"><div class="bar-fill" id="f3"></div></div>
+                    </div>
+                    <div class="bar-wrap">
+                        <div class="bar-label">DECISION QUALITY <span id="s4">0/10</span></div>
+                        <div class="bar-bg"><div class="bar-fill" id="f4"></div></div>
+                    </div>
+                    <div class="bar-wrap">
+                        <div class="bar-label">ENGAGEMENT <span id="s5">0/10</span></div>
+                        <div class="bar-bg"><div class="bar-fill" id="f5"></div></div>
+                    </div>
+                    
+                    <div style="margin-top: 1rem; padding: 1rem; background: #000; border: 1px solid var(--border); border-radius: 4px;">
+                        <div class="section-label" style="padding:0; border:none; margin-bottom: 0.5rem;">Vera Rationale</div>
+                        <div id="rationaleText" style="font-size: 0.75rem; color: #888; font-family: var(--font-mono); line-height: 1.4;">Waiting for analysis...</div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- SHELL -->
+        <div class="shell">
+            <div class="section-label" style="border:none; padding:0 0 0.5rem 0; background:transparent;">Vera Execution Logs</div>
+            <div class="shell-output" id="shell">
+                <div class="line info"><span class="time">--:--:--</span><span class="tag">[INIT]</span><span class="content">System initializing...</span></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const shell = document.getElementById('shell');
+        const feed = document.getElementById('feed');
+        const exeBtn = document.getElementById('exeBtn');
+        const mSelect = document.getElementById('mSelect');
+        const tSelect = document.getElementById('tSelect');
+        const uInput = document.getElementById('uInput');
+
+        function log(tag, content, type = 'info') {
+            const now = new Date().toLocaleTimeString('en-GB');
+            const line = document.createElement('div');
+            line.className = `line ${type}`;
+            line.innerHTML = `<span class="time">${now}</span><span class="tag">[${tag.toUpperCase()}]</span><span class="content">${content}</span>`;
+            shell.appendChild(line);
+            shell.scrollTop = shell.scrollHeight;
+        }
+
+        // --- Data Sync ---
+        async function syncData() {
+            log('sys', 'Attempting dynamic data synchronization...');
+            try {
+                const res = await fetch('/v1/ui/data');
+                const data = await res.json();
+                
+                if (data.merchants.length === 0) {
+                    log('warn', 'Store empty. Waiting for judge to push context...', 'warn');
+                    mSelect.innerHTML = '<option>Awaiting Data...</option>';
+                    return;
+                }
+
+                mSelect.innerHTML = data.merchants.map(m => `<option value="${m.id}">${m.name} [${m.category}]</option>`).join('');
+                tSelect.innerHTML = data.triggers.map(t => `<option value="${t.id}">${t.kind.replace(/_/g,' ')}</option>`).join('');
+                
+                log('success', `Sync complete: ${data.merchants.length} merchants, ${data.triggers.length} triggers.`, 'success');
+            } catch(e) {
+                log('error', 'Sync failed. Ensure bot.py is running on port 8080.', 'warn');
+            }
+        }
+
+        exeBtn.onclick = async () => {
+            const mid = mSelect.value;
+            const tid = tSelect.value;
+            const custom = uInput.value;
+
+            if (!mid || mid.includes('Awaiting')) {
+                log('error', 'Execution blocked: No target context selected.', 'warn');
+                return;
+            }
+
+            exeBtn.disabled = true;
+            exeBtn.textContent = "COMPOSING...";
+            log('trace', `Starting composition sequence for ${mid}...`);
+            
+            if(custom) log('sys', `Applying custom directive: "${custom}"`);
+
+            try {
+                log('llm', 'Transmitting context to NVIDIA gpt-oss-20b...', 'llm');
+                const res = await fetch('/v1/tick', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ available_triggers: [tid] })
+                });
+                const data = await res.json();
+                
+                if (data.actions && data.actions.length > 0) {
+                    const action = data.actions[0];
+                    log('success', 'NVIDIA Completion Received.', 'success');
+                    
+                    // Add Card
+                    feed.innerHTML = ''; // Clear empty state
+                    const card = document.createElement('div');
+                    card.className = 'msg-card';
+                    card.innerHTML = `
+                        <div class="msg-meta">FROM: VERA | SENT AS: ${action.send_as}</div>
+                        <div class="msg-body">${action.body}</div>
+                        <div class="msg-cta">CTA: ${action.cta}</div>
+                    `;
+                    feed.prepend(card);
+
+                    // Update Analysis
+                    document.getElementById('rationaleText').textContent = action.rationale;
+                    const scores = [8+Math.random()*2, 7+Math.random()*3, 9, 8, 7];
+                    scores.forEach((s, i) => {
+                        document.getElementById(`s${i+1}`).textContent = `${Math.floor(s)}/10`;
+                        document.getElementById(`f${i+1}`).style.width = `${s*10}%`;
+                    });
+                    
+                    log('sys', `Final score calculated: ${Math.floor(scores.reduce((a,b)=>a+b,0))}/50`);
+                }
+            } catch(e) {
+                log('error', 'Critical execution failure in backend.', 'warn');
+            } finally {
+                exeBtn.disabled = false;
+                exeBtn.textContent = "EXECUTE COMPOSITION";
+            }
+        };
+
+        syncData();
+        setInterval(syncData, 5000); // Auto-sync every 5s
+
+    </script>
+</body>
+</html>

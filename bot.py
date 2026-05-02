@@ -34,15 +34,22 @@ def seed_data():
         
         # Load Merchants
         with open("dataset/merchants_seed.json", 'r') as j:
-            merchants = json.load(j)
+            data = json.load(j)
+            merchants = data.get("merchants", [])
             for m in merchants:
-                context_store[f"merchant:{m['id']}"] = {"payload": m, "version": 1}
+                # Use merchant_id as the primary key
+                m_id = m.get("merchant_id")
+                if m_id:
+                    context_store[f"merchant:{m_id}"] = {"payload": m, "version": 1}
         
         # Load Triggers
         with open("dataset/triggers_seed.json", 'r') as j:
-            triggers = json.load(j)
+            data = json.load(j)
+            triggers = data.get("triggers", [])
             for t in triggers:
-                context_store[f"trigger:{t['id']}"] = {"payload": t, "version": 1}
+                t_id = t.get("id")
+                if t_id:
+                    context_store[f"trigger:{t_id}"] = {"payload": t, "version": 1}
                 
         print(f"[SEED] Successfully loaded {len(context_store)} context items.")
     except Exception as e:

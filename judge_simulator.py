@@ -27,7 +27,7 @@ BOT_URL = "http://localhost:8080"
 LLM_PROVIDER = "nvidia"
 
 # Your API key
-LLM_API_KEY = "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"
+LLM_API_KEY = "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"
 
 # Model to use
 LLM_MODEL = "openai/gpt-oss-20b"
@@ -56,7 +56,7 @@ from urllib import request as urlrequest, error as urlerror
 from abc import ABC, abstractmethod
 
 # Constants
-TIMEOUT_LLM = 60
+TIMEOUT_LLM = 120
 DATASET_DIR = Path(__file__).parent / "dataset"
 
 # =============================================================================
@@ -418,7 +418,7 @@ class BotClient:
             return None, str(e), (time.time() - start) * 1000
 
     def healthz(self):
-        return self._request("GET", "/v1/healthz", 5)
+        return self._request("GET", "/v1/healthz", 30)
 
     def metadata(self):
         return self._request("GET", "/v1/metadata", 5)
